@@ -1,0 +1,9 @@
+[submodule "src/lib/base64"]
+	path = src/lib/base64
+	url = https://github.com/ox223252/base64.git
+[submodule "src/lib/config"]
+	path = src/lib/config
+	url = https://github.com/ox223252/config.git
+[submodule "src/lib/log"]
+	path = src/lib/log
+	url = https://github.com/ox223252/log.git
