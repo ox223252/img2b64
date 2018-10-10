@@ -30,10 +30,17 @@ img2b64 > make HARD_ARCH=w64 EXEC=img2b64.exe
 ## Usage
 
 ```Shell
-> ./bien/img2b64 -i res/Tux.png -o tux.b64
+> ./bin/img2b64 -i res/Tux.png -o tux.b64
 ```
 
 
 ```Shell
-> ./bien/img2b64
+> ./bin/img2b64
+```
+
+## Note
+if you set an image as input and a HTML as output it will create a tag with your img as src
+
+```Shell
+> ./bin/img2b64 -i res/Tux.png -o tux.html
 ```
