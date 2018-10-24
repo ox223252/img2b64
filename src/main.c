@@ -49,8 +49,8 @@ static int verifyFileExistAndRemove ( char * name )
 int main ( int argc, char ** argv )
 {
 	// INIT_VAR
-	char inFile[ 64 ] = { 0 };
-	char outFile[ 64 ] = { 0 };
+	char inFile[ 512 ] = { 0 };
+	char outFile[ 512 ] = { 0 };
 	char ext[ 16 ] = { 0 };
 	char *out = outFile;
 	FILE *file = NULL;
