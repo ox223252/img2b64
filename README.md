@@ -30,17 +30,21 @@ img2b64 > make HARD_ARCH=w64 EXEC=img2b64.exe
 ## Usage
 
 ```Shell
-> ./bin/img2b64 -i res/Tux.png -o tux.b64
-```
+# multiple files
+> ./bin/img2b64 -i res/Tux.png res/Windows.jpg -o tux.b64
 
+# multiple files from folder
+> ./bin/img2b64 -i $(ls -d res/* | grep png) -o data.b64
+```
 
 ```Shell
 > ./bin/img2b64
 ```
 
 ## Note
-if you set an image as input and a HTML as output it will create a tag with your img as src
+if you set an image(s) as input and a HTML as output it will create a tag with your image(s) as src
 
 ```Shell
 > ./bin/img2b64 -i res/Tux.png -o tux.html
 ```
+

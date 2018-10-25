@@ -49,12 +49,14 @@ static int verifyFileExistAndRemove ( char * name )
 int main ( int argc, char ** argv )
 {
 	// INIT_VAR
-	char inFile[ 512 ] = { 0 };
-	char outFile[ 512 ] = { 0 };
+	char *inFile[ 512 ] = { NULL };
+	char *outFile = NULL;
 	char ext[ 16 ] = { 0 };
-	char *out = outFile;
+	char inName[ 64 ] = { 0 };
+	char outName[ 64 ] = { 0 };
 	FILE *file = NULL;
 	int result = 0;
+	int nbElements = 0;
  
 	struct
 	{
@@ -78,8 +80,8 @@ int main ( int argc, char ** argv )
 		{ "--color", "-c", 0x0c, cT ( bool ), &flags, "color" },
 		{ "--debug", "-d", 0x08, cT ( bool ), &flags, "debug" },
 		#endif
-		{ "--inFile", "-i", 1, cT ( str ), &inFile, "in file name" },
-		{ "--outFile", "-o", 1, cT ( str ), &outFile, "out file name" },
+		{ "--inFile", "-i", 512, cT ( ptrStr ), &inFile, "in file name" },
+		{ "--outFile", "-o", 1, cT ( ptrStr ), &outFile, "out file name" },
 		{ NULL }
 	};
  
@@ -95,6 +97,8 @@ int main ( int argc, char ** argv )
 	else if ( flags.help )
 	{// configFile read successfully
 		helpParamArgs ( param );
+		printf ( "Licence GPLv2\n" );
+		printf ( "made by ox223252\n" );
 		pause ( );
 		return ( 0 );
 	}
@@ -106,30 +110,52 @@ int main ( int argc, char ** argv )
 	}
 	// END_CONFIG
 
+	for ( int i = 0; i < 512; i++ )
+	{
+		if ( !inFile[ i ] )
+		{
+			break;
+		}
+	}
+
 	if ( !inFile[ 0 ] || 
 		!outFile[ 0 ] )
 	{
 		if ( !inFile[ 0 ] )
 		{
 			printf ( "set input file name : " );
-			scanf ( "%63s", inFile );
+			scanf ( "%63s", inName );
+			inFile[ 0 ] = inName;
 			while ( getchar ( ) != '\n' );
 		}
 
-		if ( !outFile[ 0 ] )
+		if ( !outFile )
 		{
 			printf ( "set output file name : " );
-			scanf ( "%63s", outFile );
+			scanf ( "%63s", outName );
+			outFile = outName;
 			while ( getchar ( ) != '\n' );
 		}
 	}
 
-	// verify if fille already exist
-	if ( verifyFileExistAndRemove ( outFile ) )
+	for ( nbElements = 0; nbElements < 512; nbElements++ )
 	{
-		logVerbose ( "Encodage abort\n" );
-		pause ( );
-		return ( 0 );
+		if ( !inFile[ nbElements ] )
+		{
+			break;
+		}
+	}
+	nbElements;
+
+	if ( nbElements == 1 )
+	{
+		// verify if fille already exist
+		if ( verifyFileExistAndRemove ( outFile ) )
+		{
+			logVerbose ( "Encodage abort\n" );
+			pause ( );
+			return ( 0 );
+		}
 	}
 
 	// get output format
@@ -146,65 +172,74 @@ int main ( int argc, char ** argv )
 		}
 	}
 
-	// if output format is HTML
-	if ( flags.outHtml )
+	for ( int j = 0; j < nbElements; j++ )
 	{
-		// get input format
-		for ( int i = strlen ( inFile ) - 1; i >= 0; i-- )
+		logVerbose ( "file : %s ", inFile[ j ] );
+
+		// if output format is HTML
+		if ( flags.outHtml )
 		{
-			if ( inFile[ i ] == '.' )
+			// get input format
+			for ( int i = strlen ( inFile[ j ] ) - 1; i >= 0; i-- )
 			{
-				strcpy ( ext, &inFile[ i + 1 ] );
-				break;
+				if ( inFile[ j ][ i ] == '.' )
+				{
+					strcpy ( ext, &inFile[ j ][ i + 1 ] );
+					break;
+				}
+			}
+
+			// if it's an image
+			if ( !strcmp ( ext, "bmp" ) ||
+				!strcmp ( ext, "png" ) ||
+				!strcmp ( ext, "jpg" ) ||
+				!strcmp ( ext, "jpeg" ) )
+			{
+				file = fopen ( outFile, "a+" );
+				if ( file > 0 )
+				{
+					fseek ( file, 0, SEEK_SET );
+					fprintf ( file, "<img src=\"data:image/%s;base64,", ext );
+					fclose ( file );
+					file = NULL;
+				}
 			}
 		}
 
-		// if it's an image
-		if ( !strcmp ( ext, "bmp" ) ||
-			!strcmp ( ext, "png" ) ||
-			!strcmp ( ext, "jpg" ) ||
-			!strcmp ( ext, "jpeg" ) )
+		// encode file
+		if ( result = encodeBase64 ( B64_F2F, ( uint8_t * )inFile[ j ], ( uint8_t ** )&outFile, NULL ) )
 		{
-			file = fopen ( outFile, "a+" );
-			if ( file > 0 )
-			{
-				fseek ( file, 0, SEEK_SET );
-				fprintf ( file, "<img src=\"data:image/%s;base64,", ext );
-				fclose ( file );
-				file = NULL;
-			}
+			logVerbose ( "KO\n" );
+
+			logVerbose ( "failure occured\n" );
+			logDebug ( "encodage failed line %d\n", result );
+			logDebug ( "%s\n", strerror ( errno ) );
+			pause ( );
+			return ( __LINE__ );
 		}
-	}
 
-	// encode file
-	if ( result = encodeBase64 ( B64_F2F, ( uint8_t * )inFile, ( uint8_t ** )&out, NULL ) )
-	{
-		logVerbose ( "failure occured\n" );
-		logDebug ( "encodage failed line %d\n", result );
-		logDebug ( "%s\n", strerror ( errno ) );
-		pause ( );
-		return ( __LINE__ );
-	}
-
-	// if we write an image in a html file
-	if ( ( flags.outHtml ) &&
-		( !strcmp ( ext, "bmp" ) ||
-		!strcmp ( ext, "png" ) ||
-		!strcmp ( ext, "jpg" ) ||
-		!strcmp ( ext, "jpeg" ) ) )
-	{
+		// if we write an image in a html file
 		file = fopen ( outFile, "r+" );
 		if ( file > 0 )
 		{
 			fseek ( file, 0, SEEK_END );
-			fprintf ( file, "\"/>" );
+			if ( ( flags.outHtml ) &&
+				( !strcmp ( ext, "bmp" ) ||
+				!strcmp ( ext, "png" ) ||
+				!strcmp ( ext, "jpg" ) ||
+				!strcmp ( ext, "jpeg" ) ) )
+			{
+				fprintf ( file, "\"/>" );
+			}
+			fprintf( file, "\n" );
 			fclose ( file );
 			file = NULL;
 		}
+
+		logVerbose ( "OK\n" );
 	}
 
 	// END_CORE
-	logVerbose ( "Encodage done\n" );
 	pause ( );
 	return ( 0 );
 }
