@@ -207,7 +207,7 @@ int main ( int argc, char ** argv )
 		}
 
 		// encode file
-		if ( result = encodeBase64 ( B64_F2F, ( uint8_t * )inFile[ j ], ( uint8_t ** )&outFile, NULL ) )
+		if ( result = encodeBase64 ( B64_F2F, inFile[ j ], outFile, NULL ) )
 		{
 			logVerbose ( "KO\n" );
 
