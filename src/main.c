@@ -60,16 +60,16 @@ int main ( int argc, char ** argv )
  
 	struct
 	{
-		#ifdef __LOG_H__
 		uint8_t help:1,
+		#ifdef __LOG_H__
 			quiet:1,
 			color:1,
 			debug:1;
 		#else
-		uint8_t help:1,
 			unused:3; // to have same allignement with and without debug/color/quiet flags
 		#endif
-		uint8_t outHtml:1;
+		uint8_t outHtml:1,
+			format:1;
 	}flags = { 0 };
  
 	param_el param[] =
@@ -80,6 +80,7 @@ int main ( int argc, char ** argv )
 		{ "--color", "-c", 0x0c, cT ( bool ), &flags, "color" },
 		{ "--debug", "-d", 0x08, cT ( bool ), &flags, "debug" },
 		#endif
+		{ "--format", "-f", 0x20, cT ( bool ), &flags, "add data:image/ext;base64 at the begining of file" },
 		{ "--inFile", "-i", 512, cT ( ptrStr ), &inFile, "in file name" },
 		{ "--outFile", "-o", 1, cT ( ptrStr ), &outFile, "out file name" },
 		{ NULL }
@@ -167,6 +168,7 @@ int main ( int argc, char ** argv )
 				( !strcmp ( "html", &outFile[ i + 1 ] ) ) )
 			{
 				flags.outHtml = 1;
+				flags.format = 1;
 			}
 			break;
 		}
@@ -174,10 +176,13 @@ int main ( int argc, char ** argv )
 
 	for ( int j = 0; j < nbElements; j++ )
 	{
-		logVerbose ( "file : %s ", inFile[ j ] );
+		logVerbose ( "file : %s\n", inFile[ j ] );
 
 		// if output format is HTML
-		if ( flags.outHtml )
+		// if output format is requested
+
+		if ( ( flags.outHtml )
+			|| ( flags.format ) )
 		{
 			// get input format
 			for ( int i = strlen ( inFile[ j ] ) - 1; i >= 0; i-- )
@@ -199,7 +204,15 @@ int main ( int argc, char ** argv )
 				if ( file > 0 )
 				{
 					fseek ( file, 0, SEEK_SET );
-					fprintf ( file, "<img src=\"data:image/%s;base64,", ext );
+					if ( flags.outHtml )
+					{
+						fprintf ( file, "<img src=\"" );
+					}
+					if ( flags.format )
+					{
+						fprintf ( file, "data:image/%s;base64,", ext );
+					}
+
 					fclose ( file );
 					file = NULL;
 				}
